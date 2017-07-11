@@ -22,10 +22,9 @@ func (f *File) FileEntry() *FileEntry {
 }
 
 func (f *File) NewReader() *io.SectionReader {
-	fe := f.FileEntry()
 	return io.NewSectionReader(f.Udf.r,
-		int64(f.Udf.PartitionStart()+f.Fid.ICB.Location),
-		int64(fe.InformationLength))
+		SECTOR_SIZE*(int64(f.FileEntry().AllocationDescriptors[0].Location)+int64(f.Udf.PartitionStart())),
+		f.Size())
 }
 
 func (f *File) Name() string {
