@@ -10,21 +10,27 @@ type File struct {
 	Udf               *Udf
 	Fid               *FileIdentifierDescriptor
 	fe                *FileEntry
-	FileEntryPosition uint64
+	fileEntryPosition uint64
+}
+
+func (f *File) GetFileEntryPosition() int64 {
+	return int64(f.fileEntryPosition)
+}
+
+func (f *File) GetFileOffset() int64 {
+	return SECTOR_SIZE * (int64(f.FileEntry().AllocationDescriptors[0].Location) + int64(f.Udf.PartitionStart()))
 }
 
 func (f *File) FileEntry() *FileEntry {
 	if f.fe == nil {
-		f.FileEntryPosition = f.Fid.ICB.Location
-		f.fe = NewFileEntry(f.Udf.ReadSector(f.Udf.PartitionStart() + f.FileEntryPosition))
+		f.fileEntryPosition = f.Fid.ICB.Location
+		f.fe = NewFileEntry(f.Udf.ReadSector(f.Udf.PartitionStart() + f.fileEntryPosition))
 	}
 	return f.fe
 }
 
 func (f *File) NewReader() *io.SectionReader {
-	return io.NewSectionReader(f.Udf.r,
-		SECTOR_SIZE*(int64(f.FileEntry().AllocationDescriptors[0].Location)+int64(f.Udf.PartitionStart())),
-		f.Size())
+	return io.NewSectionReader(f.Udf.r, f.GetFileOffset(), f.Size())
 }
 
 func (f *File) Name() string {
